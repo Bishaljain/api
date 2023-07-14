@@ -64,6 +64,17 @@ function fixImportsAndRequires(code, functionData) {
     return newCode;
 }
 
+function rearrangeImports(code) {
+    const importAndRequireRegex = /^(import .+ from .+;|const .+ = require\(.+\);?)[\r\n]*/gm;
+    let extractedStatements = code.match(importAndRequireRegex);
+    let codeExcludingStatements = code.replace(importAndRequireRegex, '');
+    extractedStatements = [...new Set(extractedStatements.map(statement => statement.trim()))];
+    let consolidatedStatements = extractedStatements.join('\n');
+    let codeWithReorderedStatements = `${consolidatedStatements}\n\n${codeExcludingStatements}`;
+
+    return codeWithReorderedStatements;
+}
+
 function cleanupGPTResponse(gptResponse) {
     if (gptResponse.substring(0, 3) === "```") {
         gptResponse = gptResponse.substring(gptResponse.indexOf('\n') + 1, gptResponse.lastIndexOf('```'));
@@ -74,5 +85,6 @@ function cleanupGPTResponse(gptResponse) {
 
 module.exports = {
     fixImportsAndRequires,
+    rearrangeImports,
     cleanupGPTResponse
 }

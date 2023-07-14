@@ -5,7 +5,11 @@ const GPT3Tokenizer = require("gpt3-tokenizer");
 const {insertVariablesInText} = require("../utils/common");
 const https = require("https");
 const {MIN_TOKENS_FOR_GPT_RESPONSE, MAX_GPT_MODEL_TOKENS} = require("../const/common");
-const { fixImportsAndRequires, cleanupGPTResponse } = require("./postprocessing");
+const {
+  fixImportsAndRequires,
+  rearrangeImports,
+  cleanupGPTResponse,
+} = require("./postprocessing");
 const { Readable } = require('stream');
 const Handlebars = require('handlebars');
 
@@ -199,6 +203,11 @@ function postprocessing(code, functionData, type) {
     let newCode = cleanupGPTResponse(code);
 
     if (type === 'unitTest') newCode = fixImportsAndRequires(newCode, functionData);
+    if (type === 'expandUnitTest') {
+        newCode = `${functionData.testCode.trim()}\n\n\/\/Generated tests:\n${newCode.trim()}`;
+        newCode = rearrangeImports(newCode)
+        newCode = fixImportsAndRequires(newCode, functionData);
+    }
 
     return newCode;
 }
