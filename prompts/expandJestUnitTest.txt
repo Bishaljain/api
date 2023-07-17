@@ -7,44 +7,57 @@ Here is the code of the file `{{{testFileName}}}` with current tests:
 {{#if relatedCode.length}}
 As you can see `{{{testFileName}}}` use functions from other javascript files. You can find source code of that functions below
 {{/if}}
+
+{{#each relatedCode}}
+Here is the source code of a function `{{{this.funcName}}}` located in the file `{{{this.fileName}}}`:
+```javascript
+{{{this.code}}}
+```
+    {{#if this.relatedFunctions.length}}
+Please note that the file `{{{this.fileName}}}` also uses functions from other files. The source code of these functions can be found below:
+        {{#each this.relatedFunctions}}
+Here is the source code of function `{{{this.funcName}}}` from the file `{{{this.fileName}}}`:
+```javascript
+{{{this.code}}}
+```
+Do not create test cases for these functions.
+        {{/each}}
+    {{/if}}
+{{/each}}
+
+
 {{#if importedFiles.length}}
 Here are paths to each of the other files (in case you need to require them):
 ```javascript
-{{#each importedFiles}}
-    {{#if ../isES6Syntax}}
-        {{#if this.exportedAsObject}}
-        import { {{{this.funcName}}} } from '{{{this.fileName}}}' -> import ... from '{{{this.pathRelativeToTest}}}';
-        
-        {{else}}
+    {{#each importedFiles}}
+        {{#if ../isES6Syntax}}
+            {{#if this.exportedAsObject}}
+import { {{{this.funcName}}} } from '{{{this.fileName}}}' -> import ... from '{{{this.pathRelativeToTest}}}';
+            {{else}}
 import ... from '{{{this.fileName}}}' -> import ... from '{{{this.pathRelativeToTest}}}';
-    {{/if}}
-    {{else}}
+            {{/if}}
+        {{else}}
 require('{{{this.fileName}}}') -> require('{{{this.pathRelativeToTest}}}');
-    {{/if}}
-{{/each}}
+        {{/if}}
+    {{/each}}
 ```
 {{/if}}
-{{#each relatedCode}}
-Here is the source code of a function `{{{this.funcName}}}` which is placed inside `{{{this.fileName}}}`:
-```javascript
-{{{this.code}}}
-```
-{{#if this.relatedFunctions.length}}
-{{#each this.relatedFunctions}}
-Here is the source code of a function `{{{this.funcName}}}` which is placed inside `{{{this.fileName}}}`:
-```javascript
-{{{this.code}}}
-```
-Please, don't create test cases for this function.
-{{/each}}
-{{/if}}
-{{/each}}
+
+
 {{#if relatedCode.length}}
 You don't need to use any of these functions, but only the ones that you are using in resulting code.
 {{/if}}
-Don't import any new functions inside resulting code except already imported ones.
+
+Don’t import any new functions inside resulting code except already imported ones.
+
 The goal is to generate as many new automated unit tests as possible while adhering to Jest testing framework best practices.
+
 Ensure each new test case has a logical and human-readable name and the resulting code is free from mistakes.
-Please make sure that all the resulting code is wrapped within a `describe` block following Jest's testing framework best practices.
+
+Please make sure that all the resulting code is wrapped within a `describe` block following Jest’s testing framework best practices.
+
+Make sure the `describe` block has a unique name.
+
 Remember, do not include any existing code from {{{testFileName}}} in the resulting code.
-Make sure you generate a tests only for a function defined in {{{testFileName}}}.
+
+Make sure you generate a tests only for a function imported in {{{testFileName}}}.
