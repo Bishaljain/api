@@ -56,6 +56,10 @@ Ensure each new test case has a logical and human-readable name and the resultin
 
 Please make sure that all the resulting code is wrapped within a `describe` block following Jest’s testing framework best practices.
 
+Please make sure that all the resulting code is wrapped within a `describe` block following Jest’s testing framework best practices.
+
+Please ensure that all setup and teardown blocks such as beforeEach, afterEach, and similar, present in the original tests, are accurately included in the generated tests to maintain the correct test environment and behavior
+
 Make sure the `describe` block has a unique name.
 
 Remember, do not include any existing code from {{{testFileName}}} in the resulting code.

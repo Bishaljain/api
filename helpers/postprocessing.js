@@ -1,5 +1,7 @@
 const path = require('path');
 
+const extensions =  ['.js', '.ts', '.jsx', '.tsx'];
+
 function fixImportsAndRequires(code, functionData) {
     let functionLookup = {};
     functionLookup[functionData.functionName] = functionData.exportedAsObject;
@@ -8,6 +10,7 @@ function fixImportsAndRequires(code, functionData) {
         (func.functionNames || []).forEach(f => {
             functionLookup[f] = func.exportedAsObject;
         });
+        functionLookup[func.funcName] = func.exportedAsObject;
     });
 
     const importPattern = /(import\s+((\{\s*(\w+)\s*\})|(.*))\s+from\s+'(\..*)';?\n?)/g;
@@ -37,7 +40,15 @@ function fixImportsAndRequires(code, functionData) {
 
     requireMatches.concat(importMatches).forEach((match) => {
         let parsedPath = path.parse(match.path);
-        let pathNoExtension = path.join(parsedPath.dir, parsedPath.name);
+        let pathNoExtension;
+        
+
+        if (extensions.includes(parsedPath.ext)) {
+            pathNoExtension = path.join(parsedPath.dir, parsedPath.name);
+        } else {
+            pathNoExtension = path.join(parsedPath.dir, parsedPath.base);
+        }
+  
         const functionName = match.importedElement.startsWith('{') ? match.importedElement.replace(/\{|\}/g, '').trim() : match.importedElement.trim();
         const isExportedAsObject = functionLookup[functionName] || false;
 
