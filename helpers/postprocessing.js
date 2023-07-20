@@ -80,7 +80,7 @@ function fixImportsAndRequires(code, functionData) {
                 correctedStatements += `let { ${namedImports.join(', ')} } = require('${pathNoExtension}');\n`;
             }
             if (defaultImports.length > 0) {
-                correctedStatements += `let ${defaultImports.join(', ')} = require('${pathNoExtension}';\n`;
+                correctedStatements += `let ${defaultImports.join(', ')} = require('${pathNoExtension}');\n`;
             }
         }
 
