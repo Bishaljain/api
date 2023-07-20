@@ -41,7 +41,6 @@ function fixImportsAndRequires(code, functionData) {
     requireMatches.concat(importMatches).forEach((match) => {
         let parsedPath = path.parse(match.path);
         let pathNoExtension;
-        
 
         if (extensions.includes(parsedPath.ext)) {
             pathNoExtension = path.join(parsedPath.dir, parsedPath.name);
@@ -49,24 +48,55 @@ function fixImportsAndRequires(code, functionData) {
             pathNoExtension = path.join(parsedPath.dir, parsedPath.base);
         }
   
-        const functionName = match.importedElement.startsWith('{') ? match.importedElement.replace(/\{|\}/g, '').trim() : match.importedElement.trim();
-        const isExportedAsObject = functionLookup[functionName] || false;
+        let defaultImports = [];
+        let namedImports = [];
 
-        let correctedStatement;
-        if (functionData.isES6Syntax) {
-            correctedStatement = isExportedAsObject
-                ? `import { ${functionName} } from '${pathNoExtension}';`
-                : `import ${functionName} from '${pathNoExtension}';`;
+        if (match.importedElement.includes('{') && match.importedElement.includes('}')) {
+            // both default and named imports exist
+            const splitElements = match.importedElement.split(',');
+
+            // first element is default import
+            defaultImports.push(splitElements[0].trim());
+
+            // rest are named imports
+            const namedElements = splitElements.slice(1).join(',');
+            namedImports.push(...namedElements.replace(/\{|\}/g, '').split(',').map(func => func.trim()).filter(Boolean));
         } else {
-            correctedStatement = isExportedAsObject
-                ? `let { ${functionName} } = require('${pathNoExtension}');`
-                : `let ${functionName} = require('${pathNoExtension}');`;
+            // only default or named imports
+            const functionNames = match.importedElement.startsWith('{')
+                ? match.importedElement.replace(/\{|\}/g, '').split(',').map(func => func.trim()).filter(Boolean)
+                : [match.importedElement.trim()];
+
+            functionNames.forEach(functionName => {
+                if (functionName && functionLookup.hasOwnProperty(functionName) && !functionLookup[functionName]) {
+                    defaultImports.push(functionName);
+                } else if (functionName) {
+                    namedImports.push(functionName);
+                }
+            });
         }
 
-        if (!importedFunctions.includes(functionName)) {
+        let correctedStatements = '';
+        if (functionData.isES6Syntax) {
+            if (namedImports.length > 0) {
+                correctedStatements += `import { ${namedImports.join(', ')} } from '${pathNoExtension}';\n`;
+            }
+            if (defaultImports.length > 0) {
+                correctedStatements += `import ${defaultImports.join(', ')} from '${pathNoExtension}';\n`;
+            }
+        } else {
+            if (namedImports.length > 0) {
+                correctedStatements += `let { ${namedImports.join(', ')} } = require('${pathNoExtension}');\n`;
+            }
+            if (defaultImports.length > 0) {
+                correctedStatements += `let ${defaultImports.join(', ')} = require('${pathNoExtension}');\n`;
+            }
+        }
+
+        if (!importedFunctions.includes([...defaultImports, ...namedImports].join(', '))) {
             newCode = newCode.replace(match.fullStatement, '');
-            imports += correctedStatement + '\n';
-            importedFunctions.push(functionName);
+            imports += correctedStatements;
+            importedFunctions.push([...defaultImports, ...namedImports].join(', '));
         }
     });
 
