@@ -51,17 +51,17 @@ function fixImportsAndRequires(code, functionData) {
 
             // rest are named imports
             const namedElements = splitElements.slice(1).join(',');
-            namedImports.push(...namedElements.replace(/\{|\}/g, '').split(',').map(func => func.trim()));
+            namedImports.push(...namedElements.replace(/\{|\}/g, '').split(',').map(func => func.trim()).filter(Boolean));
         } else {
             // only default or named imports
             const functionNames = match.importedElement.startsWith('{')
-                ? match.importedElement.replace(/\{|\}/g, '').split(',').map(func => func.trim())
+                ? match.importedElement.replace(/\{|\}/g, '').split(',').map(func => func.trim()).filter(Boolean)
                 : [match.importedElement.trim()];
 
             functionNames.forEach(functionName => {
-                if (functionLookup.hasOwnProperty(functionName) && !functionLookup[functionName]) {
+                if (functionName && functionLookup.hasOwnProperty(functionName) && !functionLookup[functionName]) {
                     defaultImports.push(functionName);
-                } else {
+                } else if (functionName) {
                     namedImports.push(functionName);
                 }
             });
