@@ -204,7 +204,7 @@ function postprocessing(code, functionData, type) {
 
     if (type === 'unitTest') newCode = fixImportsAndRequires(newCode, functionData);
     if (type === 'expandUnitTest') {
-        newCode = `${functionData.testCode.trim()}\n\n\/\/Generated tests:\n${newCode.trim()}`;
+        newCode = `${functionData.testCode.trim()}\n\n\/\/Expanded tests using Pythagora:\n${newCode.trim()}`;
         newCode = rearrangeImports(newCode)
         newCode = fixImportsAndRequires(newCode, functionData);
     }
