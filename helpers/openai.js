@@ -5,7 +5,11 @@ const GPT3Tokenizer = require("gpt3-tokenizer");
 const {insertVariablesInText} = require("../utils/common");
 const https = require("https");
 const {MIN_TOKENS_FOR_GPT_RESPONSE, MAX_GPT_MODEL_TOKENS} = require("../const/common");
-const { fixImportsAndRequires, cleanupGPTResponse } = require("./postprocessing");
+const {
+  fixImportsAndRequires,
+  rearrangeImports,
+  cleanupGPTResponse,
+} = require("./postprocessing");
 const { Readable } = require('stream');
 const Handlebars = require('handlebars');
 
@@ -78,11 +82,29 @@ function getGPTMessages(req) {
                 "content": getPromptFromFile('generateJestUnitTest.txt', req.body),
             },
         ]
+    } else if (req.type === 'expandUnitTest') {
+        return [
+            {"role": "system", "content": "You are a QA engineer and your main goal is to extend current automated unit tests in the application you're testing. You are proficient in writing automated tests for Node.js apps.\n" +
+                    "When you respond, you don't say anything except the code - no formatting, no explanation - only code. Do not include the codebase from the question" },
+            { 
+                "role": "user",
+                "content": getPromptFromFile('expandJestUnitTest.txt', req.body),
+            },
+        ]
     }
 }
 
 async function getJestUnitTests(req, res, usedNames) {
     req.type = 'unitTest';
+    req.body.relatedCode = req.body.relatedCode.map(code => {
+        code.fileName = code.fileName.substring(code.fileName.lastIndexOf('/') + 1);
+        return code;
+    })
+    return await createGPTChatCompletion(getGPTMessages(req), req, res,200);
+}
+
+async function getExpandedJestUnitTests(req, res, usedNames) {
+    req.type = 'expandUnitTest';
     req.body.relatedCode = req.body.relatedCode.map(code => {
         code.fileName = code.fileName.substring(code.fileName.lastIndexOf('/') + 1);
         return code;
@@ -181,6 +203,11 @@ function postprocessing(code, functionData, type) {
     let newCode = cleanupGPTResponse(code);
 
     if (type === 'unitTest') newCode = fixImportsAndRequires(newCode, functionData);
+    if (type === 'expandUnitTest') {
+        newCode = `${functionData.testCode.trim()}\n\n\/\/Expanded tests using Pythagora:\n${newCode.trim()}`;
+        newCode = rearrangeImports(newCode)
+        newCode = fixImportsAndRequires(newCode, functionData);
+    }
 
     return newCode;
 }
@@ -204,5 +231,6 @@ module.exports = {
     getTokensInMessages,
     getPromptFromFile,
     getJestUnitTests,
+    getExpandedJestUnitTests,
     getGPTMessages
 }
